@@ -1,9 +1,16 @@
-{% entends base.html%}
+{% extends 'base.html'%}
 
 {% block title %}
-Home Page
+Blogly
 {% endblock %}
 
 {% block content %}
-<h1>Placeholder</h1>
+<h1>Blogly Recent Posts</h1>
+{% for post in posts %}
+<a href="/posts/{{post.id}}">
+    <h2 class="pt-2">{{post.title}}</h2>
+</a>
+<p>{{post.content}}</p>
+<p><small>by <a href="/users/{{post.user_id}}">{{post.user.full_name}}</a> on {{post.pretty_datetime}}</small></p>
+{% endfor %}
 {% endblock %}

@@ -5,18 +5,39 @@
 {% endblock %}
 
 {% block content %}
-<div class="float-left">
-    {% if user.image_url %}
-    <img src="{{user.image_url}}" alt="User image" class="img-thumbnail mr-3" style="height: 200px;">
-    {% else %}
-    <img src="https://www.tenforums.com/geek/gars/images/2/types/thumb_15951118880user.png" 
-    alt="default user image" class="img-thumbnail mr-3" style="height: 200px;">
-    {% endif %}
-</div>
-<h1>{{user.full_name}}</h1>
+<div class="row">
+    <div class="col-2">
+        {% if user.image_url %}
+        <img src="{{user.image_url}}" alt="User image" class="img-thumbnail mr-3">
+        {% else %}
+        <img src="https://www.tenforums.com/geek/gars/images/2/types/thumb_15951118880user.png" 
+        alt="default user image" class="img-thumbnail mr-3">
+        {% endif %}
+    </div>
+    <div class="col-10">
+        <h1>{{user.full_name}}</h1>
 
-<form action="/users/{{user.id}}/delete" method="POST">
-    <a href="/users/{{user.id}}/edit"><button type='button' class='btn btn-primary p-2 mt-3'>Edit</button></a>
-    <button class='btn btn-danger p-2 mt-3'>Delete</button>
-</form>
+        <form action="/users/{{user.id}}/delete" method="POST">
+            <a href="/users/{{user.id}}/edit"><button type='button' class='btn btn-primary p-2 mt-3'>
+                Edit
+            </button></a>
+            <button class='btn btn-danger p-2 mt-3'>Delete</button>
+        </form>
+
+        <h2 class="mt-3">Posts</h2>
+        <ul>
+            {% if posts == [] %}
+            <li>{{user.full_name}} has not posted anything yet</li>
+            {% else %}
+            {% for post in posts %}
+            <li><a href="/posts/{{post.id}}">{{post.title}}</a></li>
+            {% endfor %}
+            {% endif %}
+        </ul>
+        <a href="/users/{{user.id}}/posts/new"><button type='button' class='btn btn-primary p-2 mt-3'>
+            New Post
+        </button></a>
+        <a href="/users"><button class='btn btn-secondary p-2 mt-3'>All Users</button></a>
+    </div>
+</div>
 {% endblock %}
