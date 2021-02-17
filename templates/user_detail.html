@@ -30,7 +30,10 @@
             <li>{{user.full_name}} has not posted anything yet</li>
             {% else %}
             {% for post in posts %}
-            <li><a href="/posts/{{post.id}}">{{post.title}}</a></li>
+            <li>
+                <a href="/posts/{{post.id}}">{{post.title}}</a> 
+                <small>on {{post.pretty_datetime}}</small>
+            </li>
             {% endfor %}
             {% endif %}
         </ul>

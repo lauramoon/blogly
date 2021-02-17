@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from app import app
-from models import db, User, Post
+from models import db, User, Post, Tag
 
 # Setup below copied from demo code
 # Use test database and don't clutter tests with SQL
@@ -39,24 +39,6 @@ class UserViewsTestCase(TestCase):
         """Clean up any fouled transaction."""
 
         db.session.rollback()
-
-    def test_homepage_redirect(self):
-        """Test that homepage redirects"""
-        with app.test_client() as client:
-            resp = client.get("/")
-            html = resp.get_data(as_text=True)
-
-            self.assertEqual(resp.status_code, 302)
-
-    def test_homepage_follow_redirect(self):
-        """Test that homepage redirects to user list"""
-        with app.test_client() as client:
-            resp = client.get("/", follow_redirects=True)
-            html = resp.get_data(as_text=True)
-
-            self.assertEqual(resp.status_code, 200)
-            self.assertIn('TestFirst', html)
-            self.assertIn('Test2Last', html)
 
     def test_list_users(self):
         """Test that list of /users gives list of users"""
@@ -120,22 +102,26 @@ class PostViewsTestCase(TestCase):
         db.session.add(user)
         db.session.commit()
 
-        post1 = Post(title='Test1', content='Test content 1.', user_id=1)
-        post2 = Post(title='Test2', content='Test content 2.', user_id=1)
-        db.session.add(post1)
-        db.session.add(post2)
+        post1 = Post(title='Test1', content='Test content 1.', user_id=user.id)
+        post2 = Post(title='Test2', content='Test content 2.', user_id=user.id)
+        tag = Tag(name='silly tag')
+        db.session.add_all([post1, post2, tag])
         db.session.commit()
-
-        # self.user_id = user.id
-        # self.user = user
-        # self.post1 = post1
-        # self.post2 = post2
 
     def tearDown(self):
         """Clean up any fouled transaction."""
 
         db.session.rollback()
 
+    def test_homepage(self):
+        """Test that homepage redirects"""
+        with app.test_client() as client:
+            resp = client.get("/")
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('TestFirst', html)
+            self.assertIn('Test content 2.', html)
     def test_user_detail(self):
         """Test that users detail gives list of posts"""
         with app.test_client() as client:
@@ -143,18 +129,27 @@ class PostViewsTestCase(TestCase):
             html = resp.get_data(as_text=True)
 
             self.assertEqual(resp.status_code, 200)
-            self.assertIn('<li><a href="/posts/1">Test1</a></li>', html)
-            self.assertIn('<li><a href="/posts/2">Test2</a></li>', html)
+            self.assertIn('<a href="/posts/1">Test1</a>', html)
+            self.assertIn('<a href="/posts/2">Test2</a>', html)
 
     def test_show_post(self):
         """Test detail page for post"""
         with app.test_client() as client:
-            resp = client.get(f"posts/2")
+            resp = client.get("posts/2")
             html = resp.get_data(as_text=True)
 
             self.assertEqual(resp.status_code, 200)
             self.assertIn('<h1>Test2</h1>', html)
             self.assertIn('<p>Test content 2.</p>', html)
+
+    def test_new_post_form(self):
+        """Test new post form shows tag option"""
+        with app.test_client() as client:
+            resp = client.get('/users/1/posts/new')
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('silly tag', html)
 
     def test_new_post_post(self):
         """Test post new post"""
@@ -173,7 +168,7 @@ class PostViewsTestCase(TestCase):
             html = resp.get_data(as_text=True)
 
             self.assertEqual(resp.status_code, 200)
-            self.assertIn('<li><a href="/posts/3">NewTitle</a></li>', html)
+            self.assertIn('<a href="/posts/3">NewTitle</a>', html)
 
     def test_delete_post(self):
         """Test deletion of post"""
@@ -183,4 +178,81 @@ class PostViewsTestCase(TestCase):
 
             self.assertEqual(resp.status_code, 200)
             self.assertNotIn('Test2', html)
-            self.assertIn('<li><a href="/posts/1">Test1</a></li>', html)
+            self.assertIn('<a href="/posts/1">Test1</a>', html)
+
+class TagViewsTestsCase(TestCase):
+    """Tests for views for Tags."""
+
+    def setUp(self):
+        """Add sample posts."""
+        Post.query.delete()
+        User.query.delete()
+
+        user = User(first_name="TestFirst", last_name="TestLast")
+        db.session.add(user)
+        db.session.commit()
+
+        post1 = Post(title='Test1', content='Test content 1.', user_id=user.id)
+        post2 = Post(title='Test2', content='Test content 2.', user_id=user.id)
+        tag = Tag(name='silly tag')
+        db.session.add_all([post1, post2, tag])
+        db.session.commit()
+
+        post1.tags.append(tag)
+        db.session.commit()
+
+    def tearDown(self):
+        """Clean up any fouled transaction."""
+
+        db.session.rollback()
+
+    def test_show_tag(self):
+        """Test detail page for post"""
+        with app.test_client() as client:
+            resp = client.get("tags/1")
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('<h1>silly tag</h1>', html)
+            self.assertIn('<a href="/posts/1">Test1</a>', html)
+            self.assertNotIn('Test2', html)
+
+    def test_new_tag_form(self):
+        """Test new tag form shows posts titles"""
+        with app.test_client() as client:
+            resp = client.get('/tags/new')
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('Test1', html)
+            self.assertIn('Test2', html)
+
+    def test_new_tag_post(self):
+        """Test add new tag"""
+        with app.test_client() as client:
+            resp = client.post('tags/new', 
+                               data={'name': 'new tag'})
+
+            self.assertEqual(resp.status_code, 302)
+
+    def test_new_tag_follow_redirect(self):
+        """Test post new tag, follow redirect"""
+        with app.test_client() as client:
+            resp = client.post('tags/new', 
+                               data={'name': 'new tag'},
+                               follow_redirects=True)
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('<li><a href="/tags/2">new tag</a></li>', html)
+            self.assertIn('<h1>Tags</h1>', html)
+
+    def test_delete_tag(self):
+        """Test deletion of post"""
+        with app.test_client() as client:
+            resp = client.post(f'tags/1/delete', follow_redirects=True)
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertNotIn('silly tag', html)
+            self.assertIn('<h1>Tags</h1>', html)

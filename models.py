@@ -1,4 +1,5 @@
 """Models for Blogly."""
+from enum import unique
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from sqlalchemy.orm import backref
@@ -20,8 +21,7 @@ class User(db.Model):
 
     last_name = db.Column(db.String(50), nullable=False)
 
-    image_url = db.Column(db.String(250), 
-                        nullable=True)
+    image_url = db.Column(db.Text, nullable=True)
 
     @property
     def full_name(self):
@@ -34,7 +34,7 @@ class Post(db.Model):
 
     title = db.Column(db.String(50), nullable=False)
 
-    content = db.Column(db.String(4000), nullable=False)
+    content = db.Column(db.Text, nullable=False)
 
     created_at = db.Column(db.DateTime, default=datetime.now)
 
@@ -42,6 +42,22 @@ class Post(db.Model):
 
     user = db.relationship('User', backref=backref('posts', cascade='all, delete-orphan'))
 
+    tags = db.relationship('Tag', secondary='posts_tags', backref='posts')
+
     @property
     def pretty_datetime(self):
-        return self.created_at.strftime("%b %d, %Y %H:%M %p")
+        return self.created_at.strftime("%b %d, %Y %I:%M %p")
+
+class Tag(db.Model):
+    __tablename__ = 'tags'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+
+    name = db.Column(db.String(50), nullable=False, unique=True)
+
+class PostTag(db.Model):
+    __tablename__ = 'posts_tags'
+
+    post_id = db.Column(db.Integer, db.ForeignKey('posts.id'), primary_key=True)
+
+    tag_id = db.Column(db.Integer, db.ForeignKey('tags.id'), primary_key=True)

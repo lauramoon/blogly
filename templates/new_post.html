@@ -9,13 +9,21 @@ New Post Form
 
 <form action="/users/{{user.id}}/posts/new" method="POST">
     <div class="form-group">
-        <label for="first_name">Title</label>
+        <label for="title">Title</label>
         <input type="text" class="form-control" id="title" name="title" placeholder="Enter a title">
     </div>
     <div class="form-group">
-        <label for="last_name">Last Name</label>
+        <label for="content">Content</label>
         <textarea class="form-control" id="content" name="content" placeholder="Type your post here"></textarea>
     </div>
+    {% for tag in tags %}
+    <div class="form-check">
+        <input class="form-check-input" type="checkbox" value="{{tag.id}}" id="tag-{{tag.id}}" name="tag">
+        <label class="form-check-label" for="tag-{{tag.id}}">
+          {{tag.name}}
+        </label>
+    </div>
+    {% endfor %}
     <a href="/users/{{user.id}}"><button type='button' class='btn btn-secondary p-2 mt-3'>Cancel</button></a>
     <button class="btn btn-success p-2 mt-3">Add</button>
 </form>

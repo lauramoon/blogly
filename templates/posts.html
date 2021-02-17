@@ -1,0 +1,22 @@
+{% extends 'base.html'%}
+
+{% block title %}
+Blogly Posts
+{% endblock %}
+
+{% block content %}
+<h1>Blogly Posts</h1>
+<ul>
+{% for post in posts %}
+    <li>
+        <a href="/posts/{{post.id}}">{{post.title}}</a> 
+        <small>by <a href="/users/{{post.user_id}}">{{post.user.full_name}}</a></small>
+        {% for tag in post.tags %}
+        <a href="/tags/{{tag.id}}" class="badge badge-primary">{{tag.name}}</a>
+        {% endfor %}
+    </li>
+{% endfor %}
+</ul>
+<a href="/users"><button class='btn btn-secondary p-2 mt-3'>All Users</button></a>
+<a href="/tags"><button class='btn btn-secondary p-2 mt-3'>All Tags</button></a>
+{% endblock %}
